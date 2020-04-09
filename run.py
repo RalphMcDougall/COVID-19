@@ -66,7 +66,7 @@ def startAnalysis():
     world_chart = graph.Chart(2, 2, "WORLD")
 
     world_chart.makeScatter(0, 0, sinceSignificant, highestCountries, "linear",
-                            "log", "Days since epoch", "Num infections", "Current highest since surpassing" + str(MIN_SIGNIFICANT_INFECTIONS) + " infections")
+                            "log", "Days since surpassing " + str(MIN_SIGNIFICANT_INFECTIONS) + " infections", "Num infections", "Current highest countries")
 
     world_chart.makeScatter(0, 1, restrictedEpoch, highestCountries, "linear",
                             "log", "Days since epoch", "Num infections", "Current highest for last " + str(NUM_DAYS) + " days")
