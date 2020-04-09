@@ -1,26 +1,41 @@
 import matplotlib.pyplot as plt
 import math
 
+from datetime import date
 
-SAMPLE_RATE = 1
+KNOWN_COLOURS = {
+    "South Africa": "#007749",
+    "WORLD": "#000000",
+    "US":   "#B22234",
+    "France": "#0055A4",
+    "Italy": "#008C45",
+    "Spain": "#F1BF00"
+}
 
 
 class Chart:
 
-    def __init__(self, numRows, numColumns):
-        self.fig, self.axs = plt.subplots(numRows, numColumns)
-        print(self.axs)
+    def __init__(self, numRows, numColumns, title):
+        print("Creating chart with", numRows,
+              "rows and", numColumns, "columns")
+        self.title = title
+        self.fig, self.axs = plt.subplots(
+            numRows, numColumns, figsize=(numColumns * 4, numRows * 4), num=title)
 
-    def makeScatter(self, px, py, store, keys, xscale, yscale, x_label, y_label, title):
+        # self.fig.suptitle(self.title)
+
+    def makeScatter(self, px, py, dat, keys, xscale, yscale, x_label, y_label, title):
         ax = self.axs[px, py]
 
         maxX = -1
         maxY = -1
         minX = -1
         minY = -1
-        for i in range(len(keys)):
-            co = keys[i]
-            x, y = store.getSmoothedData(co, SAMPLE_RATE)
+        for country in keys:
+            x, y = [], []
+            for i in dat[country]:
+                x.append(i[0])
+                y.append(i[1])
             if maxX == -1:
                 maxX = x[0]
                 minX = x[0]
@@ -31,8 +46,12 @@ class Chart:
             maxY = max(maxY, max(y))
             minX = min(minX, min(x))
             minY = min(minY, min(y))
-            ax.scatter(x, y, s=10, label=co)
-            ax.plot(x, y)
+            if country in KNOWN_COLOURS.keys():
+                ax.scatter(x, y, s=10, label=country, c=KNOWN_COLOURS[country])
+                ax.plot(x, y, c=KNOWN_COLOURS[country])
+            else:
+                ax.scatter(x, y, s=10, label=country)
+                ax.plot(x, y)
 
         ax.set_xscale(xscale)
         ax.set_yscale(yscale)
@@ -55,4 +74,13 @@ class Chart:
 
     def displayImage(self):
         self.fig.tight_layout()
-        plt.show()
+        self.fig.show()
+
+    def saveImage(self):
+        self.fig.tight_layout()
+        today = date.today()
+        d = today.strftime("%d-%m-%Y")
+        path = "reports/" + d + "_" + self.title
+        self.fig.savefig(path)
+
+        return path + ".png"

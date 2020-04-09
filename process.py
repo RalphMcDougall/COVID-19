@@ -1,75 +1,137 @@
 import math
 
+ALL_COUNTRIES = []
 
-class DataStore:
 
-    def __init__(self):
-        self.countryData = {}
-        self.dates = []
-        self.countries = []
+def loadInfectionDataFromFile():
+    print("Loading infections from file")
+    f = open(
+        "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv", "r")
+    lines = f.readlines()
+    header = lines[0].split(",")
+    dateStartInd = 4
+    dates = header[dateStartInd:]
+    totalDays = len(dates)
 
-        self.smoothedData = {}
+    countryData = {}
 
-        self.loadData()
+    countryData["WORLD"] = [
+        [dates[i], 0] for i in range(totalDays)]
 
-    def loadData(self):
-        f = open(
-            "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv", "r")
-        lines = f.readlines()
-        header = lines[0].split(",")
-        dateStartInd = 4
-        self.dates = header[dateStartInd:]
-        totalDays = len(header) - dateStartInd
+    ALL_COUNTRIES.append("WORLD")
 
-        self.countryData["WORLD"] = [
-            0 for i in range(totalDays)
-        ]
-        self.countries.append("WORLD")
+    for l in lines[1:]:
+        line = l.split(",")
+        country = line[1]
 
-        for l in lines[1:]:
-            line = l.split(",")
-            country = line[1]
-
-            dat = []
-            for i in line[len(line) - totalDays:]:
-                dat.append(int(float(i)))
+        dat = []
+        for ind, val in enumerate(line[-1 * totalDays:]):
+            dat.append([dates[ind], int(float(val))])
 
             # Initialise the current country in the list of all countries if it isn't already there
-            if country not in self.countries:
-                self.countries.append(country)
-                self.countryData[country] = [
-                    0 for i in range(totalDays)]
+            if country not in ALL_COUNTRIES:
+                ALL_COUNTRIES.append(country)
+                countryData[country] = [
+                    [dates[i], 0] for i in range(totalDays)]
 
-            # Some countries have multiple regions which need to be added onto the country total
-            for i, v in enumerate(dat):
-                print(country, i, totalDays)
-                self.countryData[country][i] += v
-                self.countryData["WORLD"][i] += v
+        # Some countries have multiple regions which need to be added onto the country total
+        for ind, v in enumerate(dat):
+            countryData[country][ind][1] += v[1]
+            countryData["WORLD"][ind][1] += v[1]
 
-        f.close()
+    f.close()
+    ALL_COUNTRIES.sort()
+    return countryData
 
-    def getSmoothedData(self, country, sampleRate):
-        # Get the data averaged over some number of days
-        if country not in self.smoothedData.keys():
-            self.smoothedData[country] = {}
 
-        if sampleRate not in self.smoothedData[country].keys():
-            xs, ys = [], []
-            src = self.countryData[country]
+def daysSinceSurpassing(dat, val):
+    print("Limiting data to days since surpassing", val)
+    res = {}
 
-            l = -1
-            r = 0
-            s = 0
+    for country in dat.keys():
+        found = False
+        cnt = 0
+        res[country] = []
+        for i in dat[country]:
+            if i[1] >= val:
+                found = True
+            if found:
+                res[country].append([cnt, i[1]])
+                cnt += 1
 
-            while r < len(src):
-                s += src[r]
-                if r == len(src) - 1 or (r - l) == sampleRate:
-                    xs.append((l + r) / 2)
-                    ys.append(s / (r - l))
-                    l = r
-                    s = 0
-                r += 1
+    return res
 
-            self.smoothedData[country][sampleRate] = [xs, ys]
 
-        return self.smoothedData[country][sampleRate]
+def smoothData(dat, sampleRate):
+    print("Smoothing data with sample rate", sampleRate)
+    res = {}
+
+    for country in dat.keys():
+        cdat = dat[country]
+        proc = []
+        r = len(cdat)
+        l = r - 1
+        s = 0
+        while l >= 0:
+            s += cdat[l][1]
+            if r - l == sampleRate or l == 0:
+                proc.append([cdat[r - 1][0], s / sampleRate])
+                s = 0
+                r = l
+            l -= 1
+        proc.reverse()
+        res[country] = proc
+
+    return res
+
+
+def restrictData(dat, num):
+    print("Restricting data to only last", num, "values")
+    res = {}
+    for country in ALL_COUNTRIES:
+        res[country] = dat[country][-1 * num:]
+
+    return res
+
+
+def getCurrentMax(dat, size):
+    print("Getting", size, "highest values")
+    d = []
+    for country in ALL_COUNTRIES:
+        if len(dat[country]) == 0:
+            continue
+        d.append([dat[country][-1][1], country])
+    d.sort()
+
+    res = []
+    for i in range(size):
+        res.append(d[-1 - i][1])
+    return res
+
+
+def getIncreasePerc(dat):
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        d = []
+        cdat = dat[country]
+        for i in range(1, len(cdat)):
+            if cdat[i - 1][1] == 0:
+                d.append([cdat[i][0], 0])
+            else:
+                d.append([cdat[i][0], 100 * (cdat[i][1] / cdat[i - 1][1] - 1)])
+
+        res[country] = d
+
+    return res
+
+
+def getIncVsVal(dat):
+    res = {}
+    for country in ALL_COUNTRIES:
+        d = []
+        cdat = dat[country]
+        for i in range(1, len(cdat)):
+            d.append([cdat[i][1], cdat[i][1] - cdat[i - 1][1]])
+        res[country] = d
+    return res
