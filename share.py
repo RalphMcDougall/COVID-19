@@ -6,7 +6,10 @@ from email.mime.text import MIMEText
 
 from datetime import date
 
-MAILING_LIST = ["ralphmcdougall2000@gmail.com"]
+MAILING_LIST = ["ralphmcdougall2000@gmail.com",
+    "maryke.mcdougall@astronenergy.co.za",
+    "mcdougal@mweb.co.za"
+]
 
 STYLING = """<style>
 body {
