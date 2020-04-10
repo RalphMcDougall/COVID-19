@@ -6,11 +6,6 @@ from email.mime.text import MIMEText
 
 from datetime import date
 
-MAILING_LIST = ["ralphmcdougall2000@gmail.com",
-                "maryke.mcdougall@astronenergy.co.za",
-                "mcdougal@mweb.co.za",
-                "alisonh.smith@btinternet.com"
-                ]
 
 STYLING = """<style>
 body {
@@ -71,15 +66,19 @@ def sendEmail(covInfo, images, testing):
     msg = MIMEMultipart()
     today = date.today()
     d = today.strftime("%d %B %Y")
-    li = []
     msg["Subject"] = "COVID-19 Analysis: " + d
     msg["From"] = ME
+    MAILING_LIST = []
 
     if not testing:
-        li = MAILING_LIST[::]
+        print("GETTING MAILING LIST")
+        with open("mailing_list.txt", "r") as f:
+            MAILING_LIST = f.readlines()
+            MAILING_LIST = map(lambda v: v.strip(), MAILING_LIST)
+            f.close()
     else:
-        li = [ME]
-    msg["To"] = ", ".join(li)
+        MAILING_LIST = [ME]
+    msg["To"] = ", ".join(MAILING_LIST)
 
     print()
     print("From:", msg["From"])
@@ -121,6 +120,6 @@ def sendEmail(covInfo, images, testing):
     s.ehlo()
     s.starttls()
     s.login(ME, PASSWORD)
-    s.sendmail(ME, li, msg.as_string())
+    s.sendmail(ME, MAILING_LIST, msg.as_string())
     s.quit()
     print("Success")

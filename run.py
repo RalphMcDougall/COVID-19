@@ -62,11 +62,11 @@ def startAnalysis():
     sa_chart.makeScatter(0, 1, restrictedSignificant, SA, "linear", "log", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
-    sa_chart.makeScatter(1, 0, restrictedIncRateSignificant, SA, "linear", "linear", "Days since surpassing " + str(
+    sa_chart.makeScatter(1, 0, incRateSignificant, SA, "linear", "linear", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
 
     sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "linear", "linear",
-                         "Number of infections", "New cases per day", "Increase vs Value")
+                         "Number of infections", "New infections per day", "Increase vs Value")
 
     uk_chart = graph.Chart(2, 2, "UK")
 
@@ -76,25 +76,25 @@ def startAnalysis():
     uk_chart.makeScatter(0, 1, restrictedSignificant, UK, "linear", "log", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
-    uk_chart.makeScatter(1, 0, restrictedIncRateSignificant, UK, "linear", "linear", "Days since surpassing " + str(
+    uk_chart.makeScatter(1, 0, incRateSignificant, UK, "linear", "linear", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
 
-    uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "linear", "linear",
-                         "Number of infections", "New cases per day", "Increase vs Value")
+    uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "log", "log",
+                         "Number of infections", "New infections per day", "Increase vs Value")
 
     world_chart = graph.Chart(2, 2, "WORLD")
 
     world_chart.makeScatter(0, 0, sinceSignificant, highestCountries, "linear",
-                            "log", "Days since surpassing " + str(MIN_SIGNIFICANT_INFECTIONS) + " infections", "Num infections", "Current highest countries")
+                            "log", "Days since surpassing " + str(MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Current highest countries")
 
     world_chart.makeScatter(0, 1, restrictedEpoch, highestCountries, "linear",
-                            "log", "Days since epoch", "Num infections", "Last " + str(NUM_DAYS) + " days")
+                            "log", "Days since epoch", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
     world_chart.makeScatter(1, 0, restrictedIncRateEpoch, highestCountries, "linear", "linear",
                             "Days since epoch", "Growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
 
     world_chart.makeScatter(1, 1, incVsValEpoch, highestCountries, "log", "log",
-                            "Number of cases", "Number of new cases per day", "Increase vs Value")
+                            "Number of infections", "New infections per day", "Increase vs Value")
 
     if DISPLAY_MODE:
         sa_chart.displayImage()
@@ -194,14 +194,14 @@ def displayTrend(c, dat):
     for country in c:
         if len(c) > 1:
             r += "<h3> <u> {}: </u> </h3>\n".format(country)
-        func = "y = "
+        func = "<i>y = "
         a = bestFit[country][0]
         b = bestFit[country][1]
         func += str(round(math.exp(a), 4)) + "&#215;"
-        func += str(round(math.exp(b), 4)) + "<sup> t </sup>"
+        func += str(round(math.exp(b), 4)) + "<sup> t </sup> </i>"
         print(country, func)
         r += """
-The log-linear graph of infections vs time for the last {:n} days has a best-fit line of y = {:n}x + {:n} with a correlation coefficient
+The log-linear graph of infections vs time for the last {:n} days has a best-fit line of <i> y = {:n}x + {:n} </i> with a correlation coefficient
 of {:n}. This can be used to predict the short-term spread of the virus. In the model, <i> t </i> represents the number of days since epoch (when the first data regarding COVID-19 was reported).
 
 <table>
