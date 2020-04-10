@@ -132,6 +132,115 @@ def getIncVsVal(dat):
         d = []
         cdat = dat[country]
         for i in range(1, len(cdat)):
+            if i > 1 and d[-1][1] > 3 * (cdat[i][1] - cdat[i - 1][1]):
+                # Likely noisy data
+                continue
             d.append([cdat[i][1], cdat[i][1] - cdat[i - 1][1]])
         res[country] = d
+    return res
+
+
+def getBestFit(dat):
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        cdat = dat[country]
+        if len(cdat) == 0:
+            res[country] = [0, 0]
+            continue
+
+        xbar = 0
+        ybar = 0
+
+        for i in cdat:
+            xbar += i[0]
+            ybar += i[1]
+
+        n = len(cdat)
+        xbar /= n
+        ybar /= n
+        a, b = 0, 0
+        sxy = 0
+        xmbs = 0
+        for i in cdat:
+            sxy += i[0] * i[1]
+            xmbs += (i[0] - xbar) ** 2
+
+        b = (sxy - n * xbar * ybar) / (xmbs)
+        a = ybar - b * xbar
+
+        res[country] = [a, b]
+
+    return res
+
+
+def logY(dat):
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        cdat = dat[country]
+        d = []
+        for i in cdat:
+            if i[1] <= 0:
+                break
+            d.append([i[0], math.log(i[1])])
+        res[country] = d
+
+    return res
+
+
+def expY(dat):
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        cdat = dat[country]
+        d = []
+        for i in cdat:
+            d.append([i[0], math.exp(i[1])])
+        res[country] = d
+
+    return res
+
+
+def predict(dat, fut):
+    fit = getBestFit(logY(dat))
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        res[country] = math.exp(fit[country][1] *
+                                (dat[country][-1][0] + fut) + fit[country][0])
+
+    return res
+
+
+def corrCoef(dat):
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        cdat = dat[country]
+        n = len(cdat)
+        if n <= 1:
+            res[country] = 0
+            continue
+        xbar = 0
+        ybar = 0
+        for i in cdat:
+            xbar += i[0]
+            ybar += i[1]
+        xbar /= n
+        ybar /= n
+
+        nu = 0
+        dx = 0
+        dy = 0
+
+        for i in cdat:
+            nu += (i[0] - xbar) * (i[1] - ybar)
+            dx += (i[0] - xbar) ** 2
+            dy += (i[1] - ybar) ** 2
+        if dx * dy == 0:
+            res[country] = 0
+            continue
+        res[country] = nu / ((dx * dy) ** 0.5)
+
     return res

@@ -9,7 +9,8 @@ KNOWN_COLOURS = {
     "US":   "#B22234",
     "France": "#0055A4",
     "Italy": "#008C45",
-    "Spain": "#F1BF00"
+    "Spain": "#F1BF00",
+    "United Kingdom": "#012169"
 }
 
 

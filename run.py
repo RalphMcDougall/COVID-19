@@ -8,7 +8,7 @@ import graph
 import process
 import share
 
-locale.setlocale(locale.LC_ALL, "en_ZA")
+locale.setlocale(locale.LC_ALL, "en_GB")
 
 MIN_SIGNIFICANT_INFECTIONS = 100
 SAMPLE_RATE = 1
@@ -18,6 +18,7 @@ UPDATE_MODE = False
 DISPLAY_MODE = False
 
 SA = ["South Africa"]
+UK = ["United Kingdom"]
 
 
 def refreshData():
@@ -38,6 +39,8 @@ def startAnalysis():
     restrictedIncRateEpoch = process.restrictData(incRateEpoch, NUM_DAYS)
     incVsValEpoch = process.getIncVsVal(smoothedEpoch)
 
+    weekPrediction = process.predict(restrictedEpoch, 7)
+
     sinceSignificant = process.daysSinceSurpassing(
         rawDat, MIN_SIGNIFICANT_INFECTIONS)
     smoothedSignificant = process.smoothData(sinceSignificant, SAMPLE_RATE)
@@ -49,19 +52,35 @@ def startAnalysis():
 
     highestCountries = process.getCurrentMax(rawDat, 5)
 
+    logBestFit = process.getBestFit(process.logY(restrictedEpoch))
+
     sa_chart = graph.Chart(2, 2, "SA")
 
     sa_chart.makeScatter(0, 0, smoothedSignificant, SA, "linear", "log", "Days since surpassing " + str(
-        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Infections since start")
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Overview")
 
     sa_chart.makeScatter(0, 1, restrictedSignificant, SA, "linear", "log", "Days since surpassing " + str(
-        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Num infections", "Infections in last " + str(NUM_DAYS) + " days")
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
     sa_chart.makeScatter(1, 0, restrictedIncRateSignificant, SA, "linear", "linear", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
 
     sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "linear", "linear",
-                         "Number of cases", "Number of new cases per day", "Increase vs Value")
+                         "Number of infections", "New cases per day", "Increase vs Value")
+
+    uk_chart = graph.Chart(2, 2, "UK")
+
+    uk_chart.makeScatter(0, 0, smoothedSignificant, UK, "linear", "log", "Days since surpassing " + str(
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Overview")
+
+    uk_chart.makeScatter(0, 1, restrictedSignificant, UK, "linear", "log", "Days since surpassing " + str(
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
+
+    uk_chart.makeScatter(1, 0, restrictedIncRateSignificant, UK, "linear", "linear", "Days since surpassing " + str(
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
+
+    uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "linear", "linear",
+                         "Number of infections", "New cases per day", "Increase vs Value")
 
     world_chart = graph.Chart(2, 2, "WORLD")
 
@@ -69,7 +88,7 @@ def startAnalysis():
                             "log", "Days since surpassing " + str(MIN_SIGNIFICANT_INFECTIONS) + " infections", "Num infections", "Current highest countries")
 
     world_chart.makeScatter(0, 1, restrictedEpoch, highestCountries, "linear",
-                            "log", "Days since epoch", "Num infections", "Current highest for last " + str(NUM_DAYS) + " days")
+                            "log", "Days since epoch", "Num infections", "Last " + str(NUM_DAYS) + " days")
 
     world_chart.makeScatter(1, 0, restrictedIncRateEpoch, highestCountries, "linear", "linear",
                             "Days since epoch", "Growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
@@ -79,25 +98,58 @@ def startAnalysis():
 
     if DISPLAY_MODE:
         sa_chart.displayImage()
+        uk_chart.displayImage()
         world_chart.displayImage()
 
     saImg = sa_chart.saveImage()
-    print(saImg)
+    ukImg = uk_chart.saveImage()
     worldImg = world_chart.saveImage()
-    print(saImg, worldImg)
-    images = [saImg, worldImg]
+    images = [saImg, ukImg, worldImg]
 
-    info = ""
-    info += "<table border=\"1\">\n"
+    info = """<section>
+<p>
+<h2> Executive Summary </h2>
 
-    info += """<tr>
+Over the last {:n} days, COVID-19 has been exhibiting a daily growth rate of {:n}%. The {:n} countries with the highest number of infections are:
+<ol>
+""".format(len(restrictedEpoch["WORLD"]), round(100 * math.exp(logBestFit["WORLD"][1]) - 100, 2), len(highestCountries) - 1)
+
+    for country in highestCountries:
+        if country == "WORLD":
+            continue
+        info += "<li> {} </li>\n".format(country)
+
+    info += """
+</ol>
+
+The table below gives a summary of the latest statistics from various countries.
+"""
+    info += """
+<table>
+<tr>
 <th> Country </th>
-<th> Infected count </th>
+<th> Number of infections </th>
 <th> Absolute increase </th>
 <th> Percent increase </th>
 </tr>
 """
-    for c in highestCountries + SA:
+
+    datC = highestCountries[::]
+
+    if "United Kingdom" not in datC and "South Africa" not in datC:
+        if rawDat["United Kingdom"][-1][1] > rawDat["South Africa"][-1][1]:
+            datC += UK
+            datC += SA
+        else:
+            datC += SA
+            datC += UK
+    elif "United Kingdom" in datC:
+        datC += SA
+    elif "South Africa" in datC:
+        datC += UK
+
+    for c in datC:
+        print(c, weekPrediction[c])
         cnt = rawDat[c][-1][1]
         inc = rawDat[c][-1][1] - rawDat[c][-2][1]
         perc = round(100 * inc / (cnt - inc), 2)
@@ -108,15 +160,79 @@ def startAnalysis():
 <td align="right"> {:n}% </td>
 </tr>
 """.format(c, cnt, inc, perc)
-    info += "</table>\n"
+    info += """</table>
+</p>
+</section>"""
 
-    info += "<br>\n"
+    info += "<section>\n"
     info += "<h2> South Africa Analysis</h2>\n"
     info += "<p><img src=\"cid:{0}\"</p>\n".format(saImg)
+    info += displayTrend(SA, restrictedEpoch)
+    info += "</section>\n"
+
+    info += "<section>\n"
+    info += "<h2> United Kingdom Analysis</h2>\n"
+    info += "<p><img src=\"cid:{0}\"</p>\n".format(ukImg)
+    info += displayTrend(UK, restrictedEpoch)
+    info += "</section>\n"
+
+    info += "<section>"
     info += "<h2> World Analysis</h2>\n"
     info += "<p><img src=\"cid:{0}\"</p>\n".format(worldImg)
+    info += displayTrend(highestCountries, restrictedEpoch)
+    info += "</section>\n"
 
     share.sendEmail(info, images, not SHARE_MODE)
+
+
+def displayTrend(c, dat):
+    r = ""
+    bestFit = process.getBestFit(process.logY(dat))
+    corrCoef = process.corrCoef(process.logY(dat))
+    p1 = process.predict(dat, 7)
+    p2 = process.predict(dat, 30)
+    for country in c:
+        if len(c) > 1:
+            r += "<h3> <u> {}: </u> </h3>\n".format(country)
+        func = "y = "
+        a = bestFit[country][0]
+        b = bestFit[country][1]
+        func += str(round(math.exp(a), 4)) + "&#215;"
+        func += str(round(math.exp(b), 4)) + "<sup> t </sup>"
+        print(country, func)
+        r += """
+The log-linear graph of infections vs time for the last {:n} days has a best-fit line of y = {:n}x + {:n} with a correlation coefficient
+of {:n}. This can be used to predict the short-term spread of the virus. In the model, <i> t </i> represents the number of days since epoch (when the first data regarding COVID-19 was reported).
+
+<table>
+<tr>
+<td> Growth function </td>
+<td> {:s} </td>
+</tr>
+<tr>
+<td> Daily growth rate </td>
+<td align="right"> {:n}% </td>
+</tr>
+<tr>
+<td> Current infections </td>
+<td align="right"> {:n} </td>
+</tr>
+<tr>
+<td> 7-day infections </td>
+<td align="right"> {:n} </td>
+</tr>
+<tr>
+<td> 30-day infections </td>
+<td align="right"> {:n} </td>
+</tr>
+</table>
+
+""".format(len(dat[country]), round(bestFit[country][1], 4), round(bestFit[country][0], 4), round(corrCoef[country], 3),
+            func, round(100 * (math.exp(b) - 1), 2),
+           int(dat[country][-1][1]), round(p1[country]), round(p2[country]))
+
+    r += """</p>\n""".format(len(dat[c[0]]))
+    return r
 
 
 if __name__ == "__main__":

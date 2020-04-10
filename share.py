@@ -7,13 +7,18 @@ from email.mime.text import MIMEText
 from datetime import date
 
 MAILING_LIST = ["ralphmcdougall2000@gmail.com",
-    "maryke.mcdougall@astronenergy.co.za",
-    "mcdougal@mweb.co.za"
-]
+                "maryke.mcdougall@astronenergy.co.za",
+                "mcdougal@mweb.co.za",
+                "alisonh.smith@btinternet.com"
+                ]
 
 STYLING = """<style>
 body {
     font-family: Arial;
+}
+section {
+    border-bottom-style: solid;
+
 }
 
 h1 {
@@ -66,9 +71,15 @@ def sendEmail(covInfo, images, testing):
     msg = MIMEMultipart()
     today = date.today()
     d = today.strftime("%d %B %Y")
+    li = []
     msg["Subject"] = "COVID-19 Analysis: " + d
     msg["From"] = ME
-    msg["To"] = ", ".join(MAILING_LIST)
+
+    if not testing:
+        li = MAILING_LIST[::]
+    else:
+        li = [ME]
+    msg["To"] = ", ".join(li)
 
     print()
     print("From:", msg["From"])
@@ -81,14 +92,9 @@ def sendEmail(covInfo, images, testing):
     <head>{0}</head>
     <body>
         <h1> DAILY COVID-19 REPORT: {1}</h1>
-
-        <p>
-        This is the state of the world at the moment: <br>
-        </p>
-        <p>
         {2}
-        </p>
         <p>
+        Data source: Johns Hopkins University <br>
         <i>
         If there are any problems with this email, please contact <a href="mailto:ralphmcdougall2000@gmail.com">Ralph McDougall</a>.
         </i>
@@ -110,14 +116,11 @@ def sendEmail(covInfo, images, testing):
         msg.attach(img)
     msg.attach(MIMEText(mail_content, "html"))
 
-    if testing:
-        return
-
     print("Connecting to SMTP server")
     s = smtplib.SMTP("smtp.gmail.com", 587)
     s.ehlo()
     s.starttls()
     s.login(ME, PASSWORD)
-    s.sendmail(ME, MAILING_LIST, msg.as_string())
+    s.sendmail(ME, li, msg.as_string())
     s.quit()
     print("Success")
