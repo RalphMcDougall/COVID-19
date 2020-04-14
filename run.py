@@ -63,7 +63,7 @@ def startAnalysis():
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
     sa_chart.makeScatter(1, 0, incRateSignificant, SA, "linear", "linear", "Days since surpassing " + str(
-        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Daily growth rate")
 
     sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "linear", "linear",
                          "Number of infections", "New infections per day", "Increase vs Value")
@@ -77,7 +77,7 @@ def startAnalysis():
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
     uk_chart.makeScatter(1, 0, incRateSignificant, UK, "linear", "linear", "Days since surpassing " + str(
-        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Daily growth rate")
 
     uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "log", "log",
                          "Number of infections", "New infections per day", "Increase vs Value")
@@ -91,7 +91,7 @@ def startAnalysis():
                             "log", "Days since epoch", "Number of infections", "Last " + str(NUM_DAYS) + " days")
 
     world_chart.makeScatter(1, 0, restrictedIncRateEpoch, highestCountries, "linear", "linear",
-                            "Days since epoch", "Growth rate (%)", "Growth rate for last " + str(NUM_DAYS) + " days")
+                            "Days since epoch", "Growth rate (%)", "Daily growth rate")
 
     world_chart.makeScatter(1, 1, incVsValEpoch, highestCountries, "log", "log",
                             "Number of infections", "New infections per day", "Increase vs Value")

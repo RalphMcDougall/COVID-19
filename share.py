@@ -74,11 +74,11 @@ def sendEmail(covInfo, images, testing):
         print("GETTING MAILING LIST")
         with open("mailing_list.txt", "r") as f:
             MAILING_LIST = f.readlines()
-            MAILING_LIST = map(lambda v: v.strip(), MAILING_LIST)
+            MAILING_LIST = list(map(lambda v: v.strip(), MAILING_LIST))
             f.close()
     else:
         MAILING_LIST = [ME]
-    msg["To"] = ", ".join(MAILING_LIST)
+    msg["To"] = ME
 
     print()
     print("From:", msg["From"])
@@ -120,6 +120,6 @@ def sendEmail(covInfo, images, testing):
     s.ehlo()
     s.starttls()
     s.login(ME, PASSWORD)
-    s.sendmail(ME, MAILING_LIST, msg.as_string())
+    s.sendmail(ME, [ME] + MAILING_LIST, msg.as_string())
     s.quit()
     print("Success")
