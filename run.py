@@ -65,7 +65,7 @@ def startAnalysis():
     sa_chart.makeScatter(1, 0, incRateSignificant, SA, "linear", "linear", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Daily growth rate")
 
-    sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "linear", "linear",
+    sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "log", "log",
                          "Number of infections", "New infections per day", "Increase vs Value")
 
     uk_chart = graph.Chart(2, 2, "UK")

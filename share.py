@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from datetime import date
+import datetime
 
 
 STYLING = """<style>
@@ -69,6 +70,16 @@ def sendEmail(covInfo, images, testing):
     msg["Subject"] = "COVID-19 Analysis: " + d
     msg["From"] = ME
     MAILING_LIST = []
+    h = datetime.datetime.now().hour
+    print("HOUR: " + str(h))
+
+    with open("log.txt", "r") as lf:
+        l = lf.readlines()
+        print(l[0], d)
+        if l[0] == d:
+            return
+    with open("log.txt", "w") as lf:
+        lf.write(d)
 
     if not testing:
         print("GETTING MAILING LIST")
@@ -78,6 +89,7 @@ def sendEmail(covInfo, images, testing):
             f.close()
     else:
         MAILING_LIST = [ME]
+    print("MAILING_LIST", MAILING_LIST)
     msg["To"] = ME
 
     print()
