@@ -1,9 +1,11 @@
 import math
+import numpy as np
 
 ALL_COUNTRIES = []
 
 
 def loadInfectionDataFromFile():
+    # Return a dictionary of the number of cases that every country had on a given date
     print("Loading infections from file")
     f = open(
         "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv", "r")
@@ -45,7 +47,7 @@ def loadInfectionDataFromFile():
 
 
 def daysSinceSurpassing(dat, val):
-    print("Limiting data to days since surpassing", val)
+    print("Limiting data to days since surpassing", val, "cases")
     res = {}
 
     for country in dat.keys():
@@ -202,13 +204,45 @@ def expY(dat):
     return res
 
 
-def predict(dat, fut):
+def predictExp(dat, fut):
     fit = getBestFit(logY(dat))
     res = {}
 
     for country in ALL_COUNTRIES:
+        if len(dat[country]) == 0:
+            res[country] = 0
+            continue
         res[country] = math.exp(fit[country][1] *
                                 (dat[country][-1][0] + fut) + fit[country][0])
+
+    return res
+
+
+def extrapolateExp(sample, days):
+    logV = [[val[0], math.log(val[1])] for val in sample]
+
+    xvals = [i[0] for i in logV]
+    yvals = [i[1] for i in logV]
+    m, c = np.polyfit(xvals, yvals, 1)
+
+    predictedValue = math.exp(c + m * (xvals[-1] + days))
+    return predictedValue
+
+
+def getDailyPredictions(dat, daysInFuture, sampleSize):
+    res = {}
+
+    for country in ALL_COUNTRIES:
+        res[country] = []
+
+        for i in range(sampleSize - 1, len(dat[country])):
+            sample = []
+            for j in range(sampleSize):
+                sample.append(dat[country][i - (sampleSize - 1) + j])
+            v = extrapolateExp(sample, daysInFuture)
+            while len(res[country]) < i:
+                res[country].append([len(res[country]), 0])
+            res[country].append([len(res[country]), v])
 
     return res
 

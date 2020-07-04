@@ -22,13 +22,18 @@ class Chart:
         print("Creating chart with", numRows,
               "rows and", numColumns, "columns")
         self.title = title
+        self.numRows = numRows
+        self.numCols = numColumns
         self.fig, self.axs = plt.subplots(
             numRows, numColumns, figsize=(numColumns * 4, numRows * 4), num=title)
 
         # self.fig.suptitle(self.title)
 
     def makeScatter(self, px, py, dat, keys, xscale, yscale, x_label, y_label, title):
-        ax = self.axs[px, py]
+        if self.numRows == 1 and self.numCols == 1:
+            ax = self.axs
+        else:
+            ax = self.axs[px, py]
 
         maxX = -1
         maxY = -1
