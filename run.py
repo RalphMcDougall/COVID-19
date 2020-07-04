@@ -10,18 +10,44 @@ import share
 
 locale.setlocale(locale.LC_ALL, "en_GB")
 
+# The minimum number of infections to start processing data for
 MIN_SIGNIFICANT_INFECTIONS = 100
+# The number of days to process before giving a data point
 SAMPLE_RATE = 1
+# The number of days to look into the past for the model predictExpion
 NUM_DAYS = 10
-SHARE_MODE = False
-UPDATE_MODE = False
-DISPLAY_MODE = False
+
+# Runtime modes
+SHARE_MODE = False  # Send email to full mailing list
+UPDATE_MODE = False  # Pull data from upstream before reporting
+DISPLAY_MODE = False  # Display the graphs
 
 SA = ["South Africa"]
 UK = ["United Kingdom"]
 
+rawDat = {}
+sinceEpoch = {}
+smoothedEpoch = {}
+restrictedEpoch = {}
+incRateEpoch = {}
+restrictedIncRateEpoch = {}
+incVsValEpoch = {}
+weekPrediction = {}
+sinceSignificant = {}
+smoothedSignificant = {}
+restrictedSignificant = {}
+incRateSignificant = {}
+restrictedIncRateSignificant = {}
+incVsValSignificant = {}
+highestCountries = {}
+logBestFit = {}
+predict7 = {}
+predict30 = {}
+images = []
+
 
 def refreshData():
+    # Get data from Johns Hopkins upstream
     if not UPDATE_MODE:
         return
     print("Pulling from upstream/master")
@@ -30,30 +56,48 @@ def refreshData():
 
 
 def startAnalysis():
+    global images, rawDat, sinceEpoch, smoothedEpoch, restrictedEpoch, incRateEpoch, restrictedIncRateEpoch, incVsValEpoch, weekPrediction, sinceSignificant, smoothedSignificant, restrictedSignificant, incRateSignificant, restrictedIncRateSignificant, incVsValSignificant, highestCountries, logBestFit, predict7, predict30
+    # Get the number of cases that every country had on a given day
     rawDat = process.loadInfectionDataFromFile()
 
+    # Get the number of cases of each country from the common point of when the first reportings started
     sinceEpoch = process.daysSinceSurpassing(rawDat, 0)
+    # Smooth the data to average out every (SAMPLE_RATE) days
     smoothedEpoch = process.smoothData(sinceEpoch, SAMPLE_RATE)
+    # Get the number of cases per day for the last (NUM_DAYS) days
     restrictedEpoch = process.restrictData(smoothedEpoch, NUM_DAYS)
+    # Get the percentage increase per day since the start
     incRateEpoch = process.getIncreasePerc(smoothedEpoch)
+    # Only get the last (NUM_DAYS) daily increases
     restrictedIncRateEpoch = process.restrictData(incRateEpoch, NUM_DAYS)
+    # Get the data plotting the number of new cases vs the total cases up to that point
     incVsValEpoch = process.getIncVsVal(smoothedEpoch)
 
-    weekPrediction = process.predict(restrictedEpoch, 7)
+    # Use the last (NUM_DAYS) infection counts to predictExp the value in 7 days
+    weekPrediction = process.predictExp(restrictedEpoch, 7)
 
+    # Get the data for the number of cases since surpassing the minimum significant value
     sinceSignificant = process.daysSinceSurpassing(
         rawDat, MIN_SIGNIFICANT_INFECTIONS)
+    # Smooth the above value
     smoothedSignificant = process.smoothData(sinceSignificant, SAMPLE_RATE)
+    # Only look at the last 10 days
     restrictedSignificant = process.restrictData(smoothedSignificant, NUM_DAYS)
     incRateSignificant = process.getIncreasePerc(smoothedSignificant)
     restrictedIncRateSignificant = process.restrictData(
         incRateSignificant, NUM_DAYS)
     incVsValSignificant = process.getIncVsVal(smoothedSignificant)
 
+    # Get the data for the current 4 highest countries as well as the world total
     highestCountries = process.getCurrentMax(rawDat, 5)
 
+    # Get the best fit line for the restricted data
     logBestFit = process.getBestFit(process.logY(restrictedEpoch))
 
+    # Get the 7-day predictions
+    predict7 = process.getDailyPredictions(sinceSignificant, 7, NUM_DAYS)
+    # Get the 30-day predictions
+    predict30 = process.getDailyPredictions(sinceSignificant, 30, NUM_DAYS)
     sa_chart = graph.Chart(2, 2, "SA")
 
     sa_chart.makeScatter(0, 0, smoothedSignificant, SA, "linear", "log", "Days since surpassing " + str(
@@ -65,7 +109,7 @@ def startAnalysis():
     sa_chart.makeScatter(1, 0, incRateSignificant, SA, "linear", "linear", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Daily growth rate")
 
-    sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "log", "log",
+    sa_chart.makeScatter(1, 1, incVsValSignificant, SA, "linear", "linear",
                          "Number of infections", "New infections per day", "Increase vs Value")
 
     uk_chart = graph.Chart(2, 2, "UK")
@@ -79,7 +123,7 @@ def startAnalysis():
     uk_chart.makeScatter(1, 0, incRateSignificant, UK, "linear", "linear", "Days since surpassing " + str(
         MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Daily growth rate")
 
-    uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "log", "log",
+    uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "linear", "linear",
                          "Number of infections", "New infections per day", "Increase vs Value")
 
     world_chart = graph.Chart(2, 2, "WORLD")
@@ -104,7 +148,7 @@ def startAnalysis():
     saImg = sa_chart.saveImage()
     ukImg = uk_chart.saveImage()
     worldImg = world_chart.saveImage()
-    images = [saImg, ukImg, worldImg]
+    images += [saImg, ukImg, worldImg]
 
     info = """<section>
 <p>
@@ -122,7 +166,7 @@ Over the last {:n} days, COVID-19 has been exhibiting a daily growth rate of {:n
     info += """
 </ol>
 
-The table below gives a summary of the latest statistics from various countries.
+The table below gives a summary of the latest statistics from various countries for the last 24 hours.
 """
     info += """
 <table>
@@ -167,30 +211,32 @@ The table below gives a summary of the latest statistics from various countries.
     info += "<section>\n"
     info += "<h2> South Africa Analysis</h2>\n"
     info += "<p><img src=\"cid:{0}\"</p>\n".format(saImg)
-    info += displayTrend(SA, restrictedEpoch)
+    info += displayTrend(SA)
     info += "</section>\n"
 
     info += "<section>\n"
     info += "<h2> United Kingdom Analysis</h2>\n"
     info += "<p><img src=\"cid:{0}\"</p>\n".format(ukImg)
-    info += displayTrend(UK, restrictedEpoch)
+    info += displayTrend(UK)
     info += "</section>\n"
 
     info += "<section>"
     info += "<h2> World Analysis</h2>\n"
     info += "<p><img src=\"cid:{0}\"</p>\n".format(worldImg)
-    info += displayTrend(highestCountries, restrictedEpoch)
+    info += displayTrend(highestCountries)
     info += "</section>\n"
 
     share.sendEmail(info, images, not SHARE_MODE)
 
 
-def displayTrend(c, dat):
+def displayTrend(c):
+    global images
     r = ""
-    bestFit = process.getBestFit(process.logY(dat))
-    corrCoef = process.corrCoef(process.logY(dat))
-    p1 = process.predict(dat, 7)
-    p2 = process.predict(dat, 30)
+    bestFit = process.getBestFit(process.logY(restrictedSignificant))
+    corrCoef = process.corrCoef(process.logY(restrictedSignificant))
+    p1 = process.predictExp(sinceSignificant, 7)
+    p2 = process.predictExp(sinceSignificant, 30)
+
     for country in c:
         if len(c) > 1:
             r += "<h3> <u> {}: </u> </h3>\n".format(country)
@@ -202,7 +248,7 @@ def displayTrend(c, dat):
         print(country, func)
         r += """
 The log-linear graph of infections vs time for the last {:n} days has a best-fit line of <i> y = {:n}x + {:n} </i> with a correlation coefficient
-of {:n}. This can be used to predict the short-term spread of the virus. In the model, <i> t </i> represents the number of days since epoch (when the first data regarding COVID-19 was reported).
+of {:n}. This can be used to predictExp the short-term spread of the virus. In the model, <i> t </i> represents the number of days since epoch (when the first data regarding COVID-19 was reported).
 
 <table>
 <tr>
@@ -227,11 +273,19 @@ of {:n}. This can be used to predict the short-term spread of the virus. In the 
 </tr>
 </table>
 
-""".format(len(dat[country]), round(bestFit[country][1], 4), round(bestFit[country][0], 4), round(corrCoef[country], 3),
+""".format(len(restrictedSignificant[country]), round(bestFit[country][1], 4), round(bestFit[country][0], 4), round(corrCoef[country], 3),
             func, round(100 * (math.exp(b) - 1), 2),
-           int(dat[country][-1][1]), round(p1[country]), round(p2[country]))
+           int(restrictedSignificant[country][-1][1]), round(p1[country]), round(p2[country]))
 
-    r += """</p>\n""".format(len(dat[c[0]]))
+        predDat = {
+            "Actual": sinceSignificant[country], "7 Day": predict7[country], "30 Day": predict30[country]}
+        predGraph = graph.Chart(1, 1, country + "PREDICTIONS")
+        predGraph.makeScatter(0, 0, predDat, ["Actual", "7 Day", "30 Day"], "linear", "log", "Days since surpassing " + str(
+            MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", country + " predictions vs actual values")
+        predImage = predGraph.saveImage()
+        r += "<p><img src=\"cid:{0}\"</p>\n".format(predImage)
+        images.append(predImage)
+    r += """</p>\n""".format(len(restrictedSignificant[c[0]]))
     return r
 
 

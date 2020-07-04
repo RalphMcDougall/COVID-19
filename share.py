@@ -77,7 +77,10 @@ def sendEmail(covInfo, images, testing):
         l = lf.readlines()
         print(l[0], d)
         if l[0] == d:
-            return
+            print("Report already sent today.")
+            if not testing:
+                print("Exiting function.")
+                return
     with open("log.txt", "w") as lf:
         lf.write(d)
 
