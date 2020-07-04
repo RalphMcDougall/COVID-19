@@ -234,15 +234,14 @@ def getDailyPredictions(dat, daysInFuture, sampleSize):
 
     for country in ALL_COUNTRIES:
         res[country] = []
-
-        for i in range(sampleSize - 1, len(dat[country])):
+        if len(dat[country]) == 0:
+            continue
+        for i in range(sampleSize - 1, dat[country][-1][0] - daysInFuture):
             sample = []
             for j in range(sampleSize):
                 sample.append(dat[country][i - (sampleSize - 1) + j])
             v = extrapolateExp(sample, daysInFuture)
-            while len(res[country]) < i:
-                res[country].append([len(res[country]), 0])
-            res[country].append([len(res[country]), v])
+            res[country].append([i + daysInFuture, v])
 
     return res
 

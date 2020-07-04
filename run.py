@@ -281,7 +281,7 @@ of {:n}. This can be used to predictExp the short-term spread of the virus. In t
             "Actual": sinceSignificant[country], "7 Day": predict7[country], "30 Day": predict30[country]}
         predGraph = graph.Chart(1, 1, country + "PREDICTIONS")
         predGraph.makeScatter(0, 0, predDat, ["Actual", "7 Day", "30 Day"], "linear", "log", "Days since surpassing " + str(
-            MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Predictions vs actual values")
+            MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", country + " predictions vs actual values")
         predImage = predGraph.saveImage()
         r += "<p><img src=\"cid:{0}\"</p>\n".format(predImage)
         images.append(predImage)
