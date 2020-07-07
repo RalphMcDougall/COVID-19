@@ -3,6 +3,7 @@ import sys
 import locale
 import math
 import base64
+import time
 
 import graph
 import process
@@ -52,6 +53,7 @@ def refreshData():
         return
     print("Pulling from upstream/master")
     os.system("git pull upstream master")
+    time.sleep(1)
     print("Done")
 
 
@@ -234,8 +236,8 @@ def displayTrend(c):
     r = ""
     bestFit = process.getBestFit(process.logY(restrictedSignificant))
     corrCoef = process.corrCoef(process.logY(restrictedSignificant))
-    p1 = process.predictExp(sinceSignificant, 7)
-    p2 = process.predictExp(sinceSignificant, 30)
+    p1 = process.predictExp(restrictedSignificant, 7)
+    p2 = process.predictExp(restrictedSignificant, 30)
 
     for country in c:
         if len(c) > 1:
