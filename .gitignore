@@ -1,3 +1,4 @@
 .DS_Store
 mailing_list.txt
 reports/*
+*.pyc
