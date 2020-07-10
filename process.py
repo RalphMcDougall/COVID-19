@@ -167,7 +167,8 @@ def getBestFit(dat):
         for i in cdat:
             sxy += i[0] * i[1]
             xmbs += (i[0] - xbar) ** 2
-
+        if xmbs == 0:
+            xmbs = 1
         b = (sxy - n * xbar * ybar) / (xmbs)
         a = ybar - b * xbar
 
