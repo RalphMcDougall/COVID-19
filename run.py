@@ -25,6 +25,7 @@ DISPLAY_MODE = False  # Display the graphs
 
 SA = ["South Africa"]
 UK = ["United Kingdom"]
+AUSTRIA = ["Austria"]
 
 rawDat = {}
 sinceEpoch = {}
@@ -128,6 +129,22 @@ def startAnalysis():
     uk_chart.makeScatter(1, 1, incVsValSignificant, UK, "linear", "linear",
                          "Number of infections", "New infections per day", "Increase vs Value")
 
+    """
+    at_chart = graph.Chart(2, 2, "Austria")
+
+    at_chart.makeScatter(0, 0, smoothedSignificant, AUSTRIA, "linear", "log", "Days since surpassing " + str(
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Overview")
+
+    at_chart.makeScatter(0, 1, restrictedSignificant, AUSTRIA, "linear", "log", "Days since surpassing " + str(
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Number of infections", "Last " + str(NUM_DAYS) + " days")
+
+    at_chart.makeScatter(1, 0, incRateSignificant, AUSTRIA, "linear", "linear", "Days since surpassing " + str(
+        MIN_SIGNIFICANT_INFECTIONS) + " infections", "Daily growth rate (%)", "Daily growth rate")
+
+    at_chart.makeScatter(1, 1, incVsValSignificant, AUSTRIA, "linear", "linear",
+                         "Number of infections", "New infections per day", "Increase vs Value")
+    """
+
     world_chart = graph.Chart(2, 2, "WORLD")
 
     world_chart.makeScatter(0, 0, sinceSignificant, highestCountries, "linear",
@@ -149,8 +166,11 @@ def startAnalysis():
 
     saImg = sa_chart.saveImage()
     ukImg = uk_chart.saveImage()
+    #atImg = at_chart.saveImage()
     worldImg = world_chart.saveImage()
-    images += [saImg, ukImg, worldImg]
+    images += [saImg, ukImg]
+    # images += [atImg]
+    images += [worldImg]
 
     info = """<section>
 <p>
@@ -181,18 +201,15 @@ The table below gives a summary of the latest statistics from various countries 
 """
 
     datC = highestCountries[::]
-
-    if "United Kingdom" not in datC and "South Africa" not in datC:
-        if rawDat["United Kingdom"][-1][1] > rawDat["South Africa"][-1][1]:
-            datC += UK
-            datC += SA
-        else:
-            datC += SA
-            datC += UK
-    elif "United Kingdom" in datC:
-        datC += SA
-    elif "South Africa" in datC:
+    if "United Kingdom" not in datC:
         datC += UK
+    if "South Africa" not in datC:
+        datC += SA
+
+    """
+    if "Austria" not in datC:
+        datC += AUSTRIA
+    """
 
     for c in datC:
         print(c, weekPrediction[c])
@@ -221,6 +238,14 @@ The table below gives a summary of the latest statistics from various countries 
     info += "<p><img src=\"cid:{0}\"</p>\n".format(ukImg)
     info += displayTrend(UK)
     info += "</section>\n"
+
+    """
+    info += "<section>\n"
+    info += "<h2> Austria Analysis</h2>\n"
+    info += "<p><img src=\"cid:{0}\"</p>\n".format(atImg)
+    info += displayTrend(AUSTRIA)
+    info += "</section>\n"
+    """
 
     info += "<section>"
     info += "<h2> World Analysis</h2>\n"
