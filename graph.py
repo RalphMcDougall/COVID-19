@@ -12,8 +12,9 @@ KNOWN_COLOURS = {
     "Spain": "#F1BF00",
     "United Kingdom": "#012169",
     "Brazil": "#009C3B",
-    "Austria": "#ED2939"
-    # "Russia": "#0039A6"
+    "Austria": "#ED2939",
+    "India": "#FF9933",
+    "Russia": "#0032A0"
 }
 
 
