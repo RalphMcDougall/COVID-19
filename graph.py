@@ -3,6 +3,8 @@ import math
 
 from datetime import date
 
+import constants
+
 KNOWN_COLOURS = {
     "South Africa": "#007749",
     "WORLD": "#000000",
@@ -21,9 +23,7 @@ KNOWN_COLOURS = {
 class Chart:
 
     def __init__(self, numRows, numColumns, title):
-        print("Creating chart with", numRows,
-              "rows and", numColumns, "columns")
-        self.title = title
+        self.title = title.replace(" ", "_")
         self.numRows = numRows
         self.numCols = numColumns
         self.fig, self.axs = plt.subplots(
@@ -77,7 +77,7 @@ class Chart:
         plt.xlim(minX / 2, maxX)
         plt.ylim(minY / 2, maxY)
 
-        if len(keys) <= 5 and len(keys) >= 2:
+        if len(keys) <= 6 and len(keys) >= 2:
             ax.legend()
 
         ax.grid(True)
@@ -94,3 +94,26 @@ class Chart:
         self.fig.savefig(path)
 
         return path + ".png"
+
+
+class CountryProfile(Chart):
+
+    def __init__(self, country, dataset):
+        super().__init__(2, 2, country)
+
+        self.makeScatter(0, 0, dataset["sinceSignificant"], [country], "linear", "log", "Days since surpassing " + str(
+            constants.MIN_SIGNIFICANT_NUMBER) + " infections", "Number of infections", "Total infections")
+
+        if country in ["United Kingdom", "Spain"]:
+            # These countries don't record the number of recoveries, so the number of active cases is not accurate
+            self.makeScatter(0, 1, dataset["deathsSinceSignificant"], [country], "linear", "log", "Days since surpassing " + str(
+                constants.MIN_SIGNIFICANT_NUMBER) + " deaths", "Number of deaths", "Total deaths")
+        else:
+            self.makeScatter(0, 1, dataset["startActiveDat"], [country], "linear", "log",
+                             "Days since first infection", "Number of infections", "Active cases")
+
+        self.makeScatter(1, 0, dataset["smoothedIncRateSignificant"], [country], "linear", "linear", "Days since surpassing " + str(
+            constants.MIN_SIGNIFICANT_NUMBER) + " infections", "Daily growth rate (%)", "Daily growth rate")
+
+        self.makeScatter(1, 1, dataset["incVsValSignificant"], [country], "linear", "linear",
+                         "Number of infections", "New infections per day", "Increase vs Value")

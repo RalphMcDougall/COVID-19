@@ -2,38 +2,49 @@ import math
 import numpy as np
 
 ALL_COUNTRIES = []
+numDays = 0
+allDates = []
 
 
 def loadData(src):
+    global allDates, numDays, ALL_COUNTRIES
     # Return a dictionary of the number of cases that every country had on a given date
-    print("Loading infections from file")
+    print("Loading data from file: " + src)
     f = open(src, "r")
     lines = f.readlines()
     header = lines[0].split(",")
     dateStartInd = 4
     dates = header[dateStartInd:]
+    if allDates == []:
+        allDates = dates[::]
+    numDays = len(dates)
     totalDays = len(dates)
+    countriesPopulated = len(ALL_COUNTRIES) > 0
+
+    if not countriesPopulated:
+        ALL_COUNTRIES.append("WORLD")
 
     countryData = {}
+    for country in ALL_COUNTRIES:
+        countryData[country] = [[dates[i], 0] for i in range(totalDays)]
 
-    countryData["WORLD"] = [
-        [dates[i], 0] for i in range(totalDays)]
-
-    ALL_COUNTRIES.append("WORLD")
+    countriesSeen = []
 
     for l in lines[1:]:
         line = l.split(",")
         country = line[1]
 
+        # Initialise the current country in the list of all countries if it isn't already there
+        if not countriesPopulated:
+            ALL_COUNTRIES.append(country)
+        if country not in countriesSeen:
+            countryData[country] = [
+                [dates[i], 0] for i in range(totalDays)]
+            countriesSeen.append(country)
+
         dat = []
         for ind, val in enumerate(line[-1 * totalDays:]):
             dat.append([dates[ind], int(float(val))])
-
-            # Initialise the current country in the list of all countries if it isn't already there
-            if country not in ALL_COUNTRIES:
-                ALL_COUNTRIES.append(country)
-                countryData[country] = [
-                    [dates[i], 0] for i in range(totalDays)]
 
         # Some countries have multiple regions which need to be added onto the country total
         for ind, v in enumerate(dat):
@@ -41,7 +52,36 @@ def loadData(src):
             countryData["WORLD"][ind][1] += v[1]
 
     f.close()
-    ALL_COUNTRIES.sort()
+    if not countriesPopulated:
+        ALL_COUNTRIES.sort()
+    return countryData
+
+
+def mergeData(s1, s2):
+    countryData = {}
+
+    for country in ALL_COUNTRIES:
+        res = [[d, 0] for d in allDates]
+        for i in range(len(s2[country])):
+            res[i][1] += s1[country][i][1]
+        for i in range(len(s2[country])):
+            res[i][1] += s2[country][i][1]
+        countryData[country] = res
+
+    return countryData
+
+
+def subtractData(s1, s2):
+    countryData = {}
+
+    for country in ALL_COUNTRIES:
+        res = [[d, 0] for d in allDates]
+        for i in range(len(s2[country])):
+            res[i][1] += s1[country][i][1]
+        for i in range(len(s2[country])):
+            res[i][1] -= s2[country][i][1]
+        countryData[country] = res
+
     return countryData
 
 
@@ -110,17 +150,17 @@ def getCurrentMax(dat, size):
     return res
 
 
-def getIncreasePerc(dat):
+def getIncreasePerc(dat, step=1):
     res = {}
 
     for country in ALL_COUNTRIES:
         d = []
         cdat = dat[country]
-        for i in range(1, len(cdat)):
-            if cdat[i - 1][1] == 0:
+        for i in range(step, len(cdat)):
+            if cdat[i - step][1] == 0:
                 d.append([cdat[i][0], 0])
             else:
-                d.append([cdat[i][0], 100 * (cdat[i][1] / cdat[i - 1][1] - 1)])
+                d.append([cdat[i][0], 100 * (cdat[i][1] / cdat[i - step][1] - 1)])
 
         res[country] = d
 
@@ -219,7 +259,12 @@ def predictExp(dat, fut):
 
 
 def extrapolateExp(sample, days):
-    logV = [[val[0], math.log(val[1])] for val in sample]
+    logV = []
+    for val in sample:
+        lv = 0
+        if val[1] > 0:
+            lv = math.log(val[1])
+        logV.append([val[0], lv])
 
     xvals = [i[0] for i in logV]
     yvals = [i[1] for i in logV]

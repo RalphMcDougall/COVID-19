@@ -29,13 +29,15 @@ h2 {
 }
 
 p {
-    font-size: 125%;
+    font-size: 100%;
     padding: 5px;
 }
 
 table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 th, td {
