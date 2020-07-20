@@ -126,7 +126,7 @@ class CountryProfile(Chart):
         res = ""
 
         res += "<section>\n"
-        res += "<h2> South Africa Analysis</h2>\n"
+        res += "<h2> " + self.country + " Analysis</h2>\n"
         res += "<p><img src=\"cid:{0}\"</p>\n".format(self.imgPath)
         res += run.displayTrend([self.country], dataset)
         res += "</section>\n"
