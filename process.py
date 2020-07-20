@@ -4,11 +4,10 @@ import numpy as np
 ALL_COUNTRIES = []
 
 
-def loadInfectionDataFromFile():
+def loadData(src):
     # Return a dictionary of the number of cases that every country had on a given date
     print("Loading infections from file")
-    f = open(
-        "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv", "r")
+    f = open(src, "r")
     lines = f.readlines()
     header = lines[0].split(",")
     dateStartInd = 4

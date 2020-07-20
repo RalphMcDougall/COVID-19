@@ -27,7 +27,7 @@ SA = ["South Africa"]
 UK = ["United Kingdom"]
 AUSTRIA = ["Austria"]
 
-rawDat = {}
+infectedDat = {}
 sinceEpoch = {}
 smoothedEpoch = {}
 restrictedEpoch = {}
@@ -59,12 +59,19 @@ def refreshData():
 
 
 def startAnalysis():
-    global images, rawDat, sinceEpoch, smoothedEpoch, restrictedEpoch, incRateEpoch, restrictedIncRateEpoch, incVsValEpoch, weekPrediction, sinceSignificant, smoothedSignificant, restrictedSignificant, incRateSignificant, restrictedIncRateSignificant, incVsValSignificant, highestCountries, logBestFit, predict7, predict30
+    global images, infectedDat, sinceEpoch, smoothedEpoch, restrictedEpoch, incRateEpoch, restrictedIncRateEpoch, incVsValEpoch, weekPrediction, sinceSignificant, smoothedSignificant, restrictedSignificant, incRateSignificant, restrictedIncRateSignificant, incVsValSignificant, highestCountries, logBestFit, predict7, predict30
     # Get the number of cases that every country had on a given day
-    rawDat = process.loadInfectionDataFromFile()
+    infectedDat = process.loadData(
+        "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+
+    recoveredDat = process.loadData(
+        "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+
+    deathDat = process.loadData(
+        "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
 
     # Get the number of cases of each country from the common point of when the first reportings started
-    sinceEpoch = process.daysSinceSurpassing(rawDat, 0)
+    sinceEpoch = process.daysSinceSurpassing(infectedDat, 0)
     # Smooth the data to average out every (SAMPLE_RATE) days
     smoothedEpoch = process.smoothData(sinceEpoch, SAMPLE_RATE)
     # Get the number of cases per day for the last (NUM_DAYS) days
@@ -81,7 +88,7 @@ def startAnalysis():
 
     # Get the data for the number of cases since surpassing the minimum significant value
     sinceSignificant = process.daysSinceSurpassing(
-        rawDat, MIN_SIGNIFICANT_INFECTIONS)
+        infectedDat, MIN_SIGNIFICANT_INFECTIONS)
     # Smooth the above value
     smoothedSignificant = process.smoothData(sinceSignificant, SAMPLE_RATE)
     # Only look at the last 10 days
@@ -92,7 +99,7 @@ def startAnalysis():
     incVsValSignificant = process.getIncVsVal(smoothedSignificant)
 
     # Get the data for the current 4 highest countries as well as the world total
-    highestCountries = process.getCurrentMax(rawDat, 5)
+    highestCountries = process.getCurrentMax(infectedDat, 5)
 
     # Get the best fit line for the restricted data
     logBestFit = process.getBestFit(process.logY(restrictedEpoch))
@@ -213,8 +220,8 @@ The table below gives a summary of the latest statistics from various countries 
 
     for c in datC:
         print(c, weekPrediction[c])
-        cnt = rawDat[c][-1][1]
-        inc = rawDat[c][-1][1] - rawDat[c][-2][1]
+        cnt = infectedDat[c][-1][1]
+        inc = infectedDat[c][-1][1] - infectedDat[c][-2][1]
         perc = round(100 * inc / (cnt - inc), 2)
         info += """<tr> 
 <td> {:s} </td>
