@@ -109,11 +109,11 @@ def startAnalysis():
     global images, dataset
     constructDatasets()
 
-    # Get the data for the current 4 highest countries as well as the world total
-    highestCountries = process.getCurrentMax(dataset["infectedDat"], 6)
-
     sa_chart = graph.CountryProfile("South Africa", dataset)
     uk_chart = graph.CountryProfile("United Kingdom", dataset)
+
+    # Get the data for the current 4 highest countries as well as the world total
+    highestCountries = process.getCurrentMax(dataset["infectedDat"], 6)
 
     world_chart = graph.Chart(2, 2, "WORLD")
 
@@ -185,17 +185,8 @@ The table below gives a summary of the latest statistics from various countries 
 </p>
 </section>"""
 
-    info += "<section>\n"
-    info += "<h2> South Africa Analysis</h2>\n"
-    info += "<p><img src=\"cid:{0}\"</p>\n".format(saImg)
-    info += displayTrend(SA)
-    info += "</section>\n"
-
-    info += "<section>\n"
-    info += "<h2> United Kingdom Analysis</h2>\n"
-    info += "<p><img src=\"cid:{0}\"</p>\n".format(ukImg)
-    info += displayTrend(UK)
-    info += "</section>\n"
+    info += sa_chart.getProfileAnalysis(dataset)
+    info += uk_chart.getProfileAnalysis(dataset)
 
     info += "<section>"
     info += "<h2> World Analysis</h2>\n"
@@ -226,7 +217,7 @@ def getEditorsNotes():
     return res
 
 
-def displayTrend(c):
+def displayTrend(c, dataset):
     global images
     r = ""
     bestFit = process.getBestFit(
@@ -236,8 +227,6 @@ def displayTrend(c):
     p2 = process.predictExp(dataset["restrictedSignificant"], 30)
 
     for country in c:
-        if len(c) > 1:
-            r += "<h3> <u> {}: </u> </h3>\n".format(country)
         func = "<i>y = "
         a = bestFit[country][0]
         b = bestFit[country][1]

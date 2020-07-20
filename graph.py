@@ -4,6 +4,7 @@ import math
 from datetime import date
 
 import constants
+import run
 
 KNOWN_COLOURS = {
     "South Africa": "#007749",
@@ -26,6 +27,7 @@ class Chart:
         self.title = title.replace(" ", "_")
         self.numRows = numRows
         self.numCols = numColumns
+        self.imgPath = ""
         self.fig, self.axs = plt.subplots(
             numRows, numColumns, figsize=(numColumns * 4, numRows * 4), num=title)
 
@@ -92,6 +94,7 @@ class Chart:
         d = today.strftime("%d-%m-%Y")
         path = "reports/" + d + "_" + self.title
         self.fig.savefig(path)
+        self.imgPath = path + ".png"
 
         return path + ".png"
 
@@ -100,6 +103,7 @@ class CountryProfile(Chart):
 
     def __init__(self, country, dataset):
         super().__init__(2, 2, country)
+        self.country = country
 
         self.makeScatter(0, 0, dataset["sinceSignificant"], [country], "linear", "log", "Days since surpassing " + str(
             constants.MIN_SIGNIFICANT_NUMBER) + " infections", "Number of infections", "Total infections")
@@ -117,3 +121,14 @@ class CountryProfile(Chart):
 
         self.makeScatter(1, 1, dataset["incVsValSignificant"], [country], "linear", "linear",
                          "Number of infections", "New infections per day", "Increase vs Value")
+
+    def getProfileAnalysis(self, dataset):
+        res = ""
+
+        res += "<section>\n"
+        res += "<h2> South Africa Analysis</h2>\n"
+        res += "<p><img src=\"cid:{0}\"</p>\n".format(self.imgPath)
+        res += run.displayTrend([self.country], dataset)
+        res += "</section>\n"
+
+        return res
