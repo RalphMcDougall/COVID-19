@@ -11,7 +11,7 @@ KNOWN_COLOURS = {
     "WORLD": "#000000",
     "US":   "#B22234",
     "France": "#0055A4",
-    "Italy": "#008C45",
+    "Italy": "#CB333B",
     "Spain": "#F1BF00",
     "United Kingdom": "#012169",
     "Brazil": "#009C3B",
@@ -113,8 +113,8 @@ class CountryProfile(Chart):
             self.makeScatter(0, 1, dataset["deathsSinceSignificant"], [country], "linear", "log", "Days since surpassing " + str(
                 constants.MIN_SIGNIFICANT_NUMBER) + " deaths", "Number of deaths", "Total deaths")
         else:
-            self.makeScatter(0, 1, dataset["startActiveDat"], [country], "linear", "log",
-                             "Days since first infection", "Number of infections", "Active cases")
+            self.makeScatter(0, 1, dataset["significantActiveDat"], [country], "linear", "log",
+                             "Days since " + str(constants.MIN_SIGNIFICANT_NUMBER) + " active cases", "Number of infections", "Active cases")
 
         self.makeScatter(1, 0, dataset["smoothedIncRateSignificant"], [country], "linear", "linear", "Days since surpassing " + str(
             constants.MIN_SIGNIFICANT_NUMBER) + " infections", "Daily growth rate (%)", "Daily growth rate")

@@ -54,7 +54,7 @@ def constructDatasets():
         dataset["infectedDat"], dataset["mergedRecovered"])
     dataset["startActiveDat"] = process.daysSinceSurpassing(
         dataset["activeDat"], 1)
-    dataset["restrictedActiveDat"] = process.daysSinceSurpassing(
+    dataset["significantActiveDat"] = process.daysSinceSurpassing(
         dataset["activeDat"], constants.MIN_SIGNIFICANT_NUMBER)
 
     # Get the number of cases of each country from the common point of when the first reportings started
@@ -111,6 +111,8 @@ def startAnalysis():
 
     sa_chart = graph.CountryProfile("South Africa", dataset)
     uk_chart = graph.CountryProfile("United Kingdom", dataset)
+    it_chart = graph.CountryProfile("Italy", dataset)
+    it_chart.saveImage()
 
     # Get the data for the current 4 highest countries as well as the world total
     highestCountries = process.getCurrentMax(dataset["infectedDat"], 6)
@@ -120,8 +122,8 @@ def startAnalysis():
     world_chart.makeScatter(0, 0, dataset["sinceSignificant"], highestCountries, "linear",
                             "log", "Days since surpassing " + str(constants.MIN_SIGNIFICANT_NUMBER) + " infections", "Number of infections", "Current highest countries")
 
-    world_chart.makeScatter(0, 1, dataset["restrictedEpoch"], highestCountries, "linear",
-                            "log", "Days since epoch", "Number of infections", "Last " + str(constants.NUM_DAYS) + " days")
+    world_chart.makeScatter(0, 1, dataset["significantActiveDat"], highestCountries, "linear", "log",
+                            "Days since " + str(constants.MIN_SIGNIFICANT_NUMBER) + " active cases", "Number of infections", "Active cases")
 
     world_chart.makeScatter(1, 0, dataset["restrictedIncRateEpoch"], highestCountries, "linear", "linear",
                             "Days since epoch", "Growth rate (%)", "Daily growth rate")
@@ -132,6 +134,7 @@ def startAnalysis():
     saImg = sa_chart.saveImage()
     ukImg = uk_chart.saveImage()
     worldImg = world_chart.saveImage()
+
     images = [saImg, ukImg, worldImg]
     info = ""
     info += getEditorsNotes()
