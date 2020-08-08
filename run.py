@@ -111,8 +111,6 @@ def startAnalysis():
 
     sa_chart = graph.CountryProfile("South Africa", dataset)
     uk_chart = graph.CountryProfile("United Kingdom", dataset)
-    it_chart = graph.CountryProfile("Italy", dataset)
-    it_chart.saveImage()
 
     # Get the data for the current 4 highest countries as well as the world total
     highestCountries = process.getCurrentMax(dataset["infectedDat"], 6)
