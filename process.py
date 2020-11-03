@@ -44,6 +44,9 @@ def loadData(src):
 
         dat = []
         for ind, val in enumerate(line[-1 * totalDays:]):
+            if val in ["", "\n", "\t"]:
+                dat.append([dates[ind], 0])
+                continue
             dat.append([dates[ind], int(float(val))])
 
         # Some countries have multiple regions which need to be added onto the country total
