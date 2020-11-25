@@ -113,7 +113,7 @@ def startAnalysis():
     uk_chart = graph.CountryProfile("United Kingdom", dataset)
 
     # Get the data for the current 4 highest countries as well as the world total
-    highestCountries = process.getCurrentMax(dataset["infectedDat"], 6)
+    highestCountries = process.getCurrentMax(dataset["infectedDat"], 5)
 
     world_chart = graph.Chart(2, 2, "WORLD")
 
